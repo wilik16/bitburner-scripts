@@ -1,42 +1,82 @@
 /** @param {NS} ns */
-let distributeScriptName = "distribute.js";
-let doTheThingScriptName = "doTheThing.js";
+let scriptName = "doTheThing.js";
+let scriptMem = 2.4;
 
-var passedServers = [];
+var processedServers = ["home"];
+
+var isBrutesshExist = false;
+var isFtpcrackExist = false;
+var isRelaysmtpExist = false;
+var isHttpwormExist = false;
+var isSqlinjectExist = false;
 
 export async function main(ns) {
-	let isBrutesshExist = ns.fileExists("BruteSSH.exe", "home");
-	let isFtpcrackExist = ns.fileExists("FTPCrack.exe", "home");
-	let isRelaysmtpExist = ns.fileExists("relaySMTP.exe", "home");
-	let isHttpwormExist = ns.fileExists("HTTPWorm.exe", "home");
-	let isSqlinjectExist = ns.fileExists("SQLInject.exe", "home");
+	await checkExecutables(ns);
+	await checkServer(ns, "home");
+	await ns.sleep(60000);
+}
 
-	let servers = await ns.scan();
+function checkExecutables(ns) {
+	isBrutesshExist = ns.fileExists("BruteSSH.exe", "home");
+	isFtpcrackExist = ns.fileExists("FTPCrack.exe", "home");
+	isRelaysmtpExist = ns.fileExists("relaySMTP.exe", "home");
+	isHttpwormExist = ns.fileExists("HTTPWorm.exe", "home");
+	isSqlinjectExist = ns.fileExists("SQLInject.exe", "home");
+}
+
+async function checkServer(ns, host) {
+	let servers = await ns.scan(host);
 	for (var i = 0; i < servers.length; ++i) {
 		let server = servers[i];
-		passedServers.push(server);
-		if (server == "home" || server.startsWith("own-")) {
+
+		// Skip previously processed servers and purchased servers
+		if (processedServers.includes(server) || server.startsWith("own-")) {
 			continue;
 		}
-		let portsRequired = ns.getServerNumPortsRequired(server); 
-		if (portsRequired == 0) {
-			await ns.nuke(server);
-			await ns.scp(distributeScriptName, server);
-			await ns.scp(doTheThingScriptName, server);
-			await ns.exec(distributeScriptName, server);
-		} else if (portsRequired == 1) {
-			await ns.brutessh(server);
-			await ns.nuke(server);
-			await ns.scp(distributeScriptName, server);
-			await ns.scp(doTheThingScriptName, server);
-			await ns.exec(distributeScriptName, server);
-		} else if (portsRequired == 2) {
-			await ns.brutessh(server);
-			await ns.ftpcrack(server);
-			await ns.nuke(server);
-			await ns.scp(distributeScriptName, server);
-			await ns.scp(doTheThingScriptName, server);
-			await ns.exec(distributeScriptName, server);
+
+		// Process server, then add to processedServers list
+		await processServer(ns, server);
+		processedServers.push(server);
+		await checkServer(ns, server);
+	}
+}
+
+async function processServer(ns, server) {
+	let portsRequired = ns.getServerNumPortsRequired(server);
+	switch(true) {
+	case portsRequired >= 5:
+		if (!isSqlinjectExist) {
+			break;
 		}
+		ns.sqlinject(server);
+	case portsRequired >= 4:
+		if (!isHttpwormExist) {
+			break;
+		}
+		ns.httpworm(server);
+		
+	case portsRequired >= 3:
+		if (!isRelaysmtpExist) {
+			break;
+		}
+		ns.relaysmtp(server);
+	case portsRequired >= 2:
+		if (!isFtpcrackExist) {
+			break;
+		}
+		ns.ftpcrack(server);
+	case portsRequired >= 1:
+		if (!isBrutesshExist) {
+			break;
+		}
+		ns.brutessh(server);
+	default:
+		let threadNum = Math.floor(ns.getServerMaxRam(server) / scriptMem);
+		if (threadNum == 0) {
+			break;
+		}
+		await ns.nuke(server);
+		await ns.scp(scriptName, server);
+		await ns.exec(scriptName, server, threadNum);
 	}
 }
