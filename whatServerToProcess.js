@@ -2,7 +2,6 @@
 var processedServers = ["home"];
 var serverHackingLevel = 0;
 var serverName = "";
-var serverRequiredPorts = 0;
 
 var playerHackingLevel = 0;
 var portOpenerCount = 0;
@@ -11,7 +10,7 @@ export async function main(ns) {
     playerHackingLevel = ns.getHackingLevel();
     calculatePortOpenerCount(ns);
     await checkServer(ns, "home");
-    ns.tprintf("Server to process \"" + serverName + "\", required hacking level: " + serverHackingLevel + " " + serverRequiredPorts);
+    ns.tprintf("Server to process \"" + serverName + "\", required hacking level: " + serverHackingLevel);
 }
 
 async function checkServer(ns, host) {
@@ -32,7 +31,6 @@ async function checkServer(ns, host) {
             && requiredNumPorts <= portOpenerCount) {
             serverHackingLevel = requiredHackingLevel;
             serverName = server;
-            serverRequiredPorts = requiredNumPorts;
         }
 		processedServers.push(server);
 		await checkServer(ns, server);
