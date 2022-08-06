@@ -2,12 +2,15 @@
 let distributeScriptName = "distribute.js";
 let doTheThingScriptName = "doTheThing.js";
 
-let brutessh = "BruteSSH.exe";
-let ftpcrack = "FTPCrack.exe";
-
 var passedServers = [];
 
 export async function main(ns) {
+	let isBrutesshExist = ns.fileExists("BruteSSH.exe", "home");
+	let isFtpcrackExist = ns.fileExists("FTPCrack.exe", "home");
+	let isRelaysmtpExist = ns.fileExists("relaySMTP.exe", "home");
+	let isHttpwormExist = ns.fileExists("HTTPWorm.exe", "home");
+	let isSqlinjectExist = ns.fileExists("SQLInject.exe", "home");
+
 	let servers = await ns.scan();
 	for (var i = 0; i < servers.length; ++i) {
 		let server = servers[i];
@@ -22,14 +25,14 @@ export async function main(ns) {
 			await ns.scp(doTheThingScriptName, server);
 			await ns.exec(distributeScriptName, server);
 		} else if (portsRequired == 1) {
-			await ns.exec(brutessh, server);
+			await ns.brutessh(server);
 			await ns.nuke(server);
 			await ns.scp(distributeScriptName, server);
 			await ns.scp(doTheThingScriptName, server);
 			await ns.exec(distributeScriptName, server);
 		} else if (portsRequired == 2) {
-			await ns.exec(brutessh, server);
-			await ns.exec(ftpcrack, server);
+			await ns.brutessh(server);
+			await ns.ftpcrack(server);
 			await ns.nuke(server);
 			await ns.scp(distributeScriptName, server);
 			await ns.scp(doTheThingScriptName, server);
