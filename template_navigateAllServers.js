@@ -2,11 +2,11 @@
 var processedServers = ["home"];
 
 export async function main(ns) {
-	// Start process from "home"
-	await processServer(ns, "home");
+	// Start from "home"
+	await checkServer(ns, "home");
 }
 
-async function processServer(ns, host) {
+async function checkServer(ns, host) {
 	let servers = await ns.scan(host);
 	for (var i = 0; i < servers.length; ++i) {
 		let server = servers[i];
@@ -16,8 +16,9 @@ async function processServer(ns, host) {
 			continue;
 		}
 
-		// Add current server to processedServers list, then process it
+		// Process server, then add to processedServers list
+		// TODO: insert process here
 		processedServers.push(server);
-		await processServer(ns, server);
+		await checkServer(ns, server);
 	}
 }

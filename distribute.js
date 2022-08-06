@@ -1,4 +1,8 @@
 /** @param {NS} ns */
+/*
+ * Run through all servers and run script on current rootable server
+ */
+
 let scriptName = "doTheThing.js";
 let scriptMem = 2.4;
 
@@ -13,7 +17,6 @@ var isSqlinjectExist = false;
 export async function main(ns) {
 	await checkExecutables(ns);
 	await checkServer(ns, "home");
-	await ns.sleep(60000);
 }
 
 function checkExecutables(ns) {
