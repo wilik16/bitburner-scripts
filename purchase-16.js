@@ -1,7 +1,7 @@
 /** @param {NS} ns */
 let scriptName = "doTheThing.js";
 let scriptMem = 2.4;
-let ram = 8;
+let ram = 16;
 
 let thread = Math.floor(ram / scriptMem);
 

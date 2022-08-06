@@ -1,6 +1,7 @@
 /** @param {NS} ns */
 /*
  * Run through all servers and run script on current rootable server
+ * Add "own" as first argument to process purchased servers too
  */
 
 let scriptName = "doTheThing.js";
@@ -33,7 +34,10 @@ async function checkServer(ns, host) {
 		let server = servers[i];
 
 		// Skip previously processed servers and purchased servers
-		if (processedServers.includes(server) || server.startsWith("own-")) {
+		if (processedServers.includes(server)) {
+			continue;
+		}
+		if (server.startsWith("own-") && ns.args[0] != "own") {
 			continue;
 		}
 
@@ -45,41 +49,47 @@ async function checkServer(ns, host) {
 }
 
 async function processServer(ns, server) {
-	let portsRequired = ns.getServerNumPortsRequired(server);
-	switch(true) {
-	case portsRequired >= 5:
-		if (!isSqlinjectExist) {
-			break;
+	if (ns.hasRootAccess(server)) {
+		await copyAndExecScript(ns, server);
+	} else {
+		let portsRequired = ns.getServerNumPortsRequired(server);
+		switch(true) {
+		case portsRequired >= 5:
+			if (!isSqlinjectExist) {
+				break;
+			}
+			ns.sqlinject(server);
+		case portsRequired >= 4:
+			if (!isHttpwormExist) {
+				break;
+			}
+			ns.httpworm(server);
+		case portsRequired >= 3:
+			if (!isRelaysmtpExist) {
+				break;
+			}
+			ns.relaysmtp(server);
+		case portsRequired >= 2:
+			if (!isFtpcrackExist) {
+				break;
+			}
+			ns.ftpcrack(server);
+		case portsRequired >= 1:
+			if (!isBrutesshExist) {
+				break;
+			}
+			ns.brutessh(server);
+		default:
+			await ns.nuke(server);
+			await copyAndExecScript(ns, server);
 		}
-		ns.sqlinject(server);
-	case portsRequired >= 4:
-		if (!isHttpwormExist) {
-			break;
-		}
-		ns.httpworm(server);
-		
-	case portsRequired >= 3:
-		if (!isRelaysmtpExist) {
-			break;
-		}
-		ns.relaysmtp(server);
-	case portsRequired >= 2:
-		if (!isFtpcrackExist) {
-			break;
-		}
-		ns.ftpcrack(server);
-	case portsRequired >= 1:
-		if (!isBrutesshExist) {
-			break;
-		}
-		ns.brutessh(server);
-	default:
-		let threadNum = Math.floor(ns.getServerMaxRam(server) / scriptMem);
-		if (threadNum == 0) {
-			break;
-		}
-		await ns.nuke(server);
+	}
+}
+
+async function copyAndExecScript(ns, server) {
+	let threadNum = Math.floor(ns.getServerMaxRam(server) / scriptMem);
+	if (threadNum > 0) {
 		await ns.scp(scriptName, server);
-		await ns.exec(scriptName, server, threadNum);
+		await ns.exec(scriptName, server, threadNum);	
 	}
 }
