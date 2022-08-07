@@ -1,5 +1,5 @@
 /** @param {NS} ns */
-let target = "crush-fitness";
+let target = "silver-helix";
 
 export async function main(ns) {
 	let moneyThresh = ns.getServerMaxMoney(target) * 0.75;

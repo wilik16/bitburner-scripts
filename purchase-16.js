@@ -6,7 +6,7 @@ let ram = 16;
 let thread = Math.floor(ram / scriptMem);
 
 export async function main(ns) {
-	var currentIndex = 0;
+	var currentIndex = -1;
 
 	let serverNamePrefix = "own-" + ram + "-";
 
